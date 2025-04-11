@@ -10,8 +10,8 @@ client = OpenAI(
         api_key="xxx",
         project="xxx")
 
-ASSISTANT_ID="asst_xxx"
-#ASSISTANT_ID="asst_1AapdHYS6wIAbSyQJrFpYqFV"
+#ASSISTANT_ID="asst_E12XXRulPDxZQdBmJBweCWfD"
+ASSISTANT_ID="asst_xxy"
 
 # Load artist names
 with open("contemporary_artists.json", "r", encoding="utf-8") as f:
@@ -26,65 +26,6 @@ with open("contemporary_artists.json", "r", encoding="utf-8") as f:
 conn = sqlite3.connect("artist_scorecards.db")
 cur = conn.cursor()
 
-# Prompt template
-PROMPT_TEMPLATE = """
-You are a cultural analyst. Analyze the artist: "{name}".
-Respond with a valid JSON object that exactly matches this structure:
-- Do not include any explanation.
-- Do not wrap the result in Markdown.
-- Use double quotes for all keys and values.
-- Respond only with the JSON.
-
-  {{
-    "name": "{name}",
-    "canonical_name": "{name}",
-    "names": [
-      {{"type": "birth_name", "value": "<full legal name>"}},
-      {{"type": "known_as", "value": "<nickname or public name>"}},
-      {{"type": "mononym", "value": "<mononym if applicable>"}}
-    ],
-    "time_period": "<years of main activity or life>",
-    "cultural_context": "<nation, movement, relevant socio-political context>",
-    "primary_medium": ["<media used>"],
-    "workflow_mode": "Engaged | Withdrawn | Hybrid",
-    "attention_metrics": {{
-      "societal_engagement": 1-5,
-      "institutional_dependency": 1-5,
-      "inner_motivation": 1-5,
-      "audience_addressed": 1-5,
-      "discursive_participation": 1-5,
-      "visibility_in_lifetime": 1-5
-  "time_period": "<years of main activity or life>",
-  "cultural_context": "<nation, movement, relevant socio-political context>",
-  "primary_medium": ["<media used>"],
-  "workflow_mode": "Engaged | Withdrawn | Hybrid",
-  "attention_metrics": {{
-    "societal_engagement": 1-5,
-    "institutional_dependency": 1-5,
-    "inner_motivation": 1-5,
-    "audience_addressed": 1-5,
-    "discursive_participation": 1-5,
-    "visibility_in_lifetime": 1-5
-  }},
-  "role_identity": ["<list of tags like Mystic, Educator, etc>"],
-  "narrative_context": {{
-    "triggering_forces": ["<social/spiritual/political forces>"],
-    "conflict_zones": ["<personal or institutional struggles>"],
-    "legacy_mode": "<Canonical | Marginal | Rediscovered | etc>",
-    "alignment_with_power": "<Ally | Adversary | Independent>",
-    "myth_construction": "<Summary of how they were mythologized or not>"
-  }},
-  "audience_types": ["<Institutional | Cult/Niche | Internalized | Public Spectacle | Peer Circle>"],
-  "influences": [
-    {{"name": "<artist>", "type": "<influence type>"}},
-    {{"name": "<artist>", "type": "<influence type>"}}
-  ],
-  "style_lineage": [
-    {{"style": "<movement/period>", "role": "<follower | founder | influenced_by>"}},
-    {{"style": "<movement/period>", "role": "<key figure>"}}
-  ]
-}}
-"""
 
 def build_prompt(name):
     return PROMPT_TEMPLATE.format(name=name)
@@ -214,7 +155,7 @@ def save_artist_record(record):
   conn.commit()
   
 def get_artist_data(name):
-  prompt = build_prompt(name)
+  #prompt = build_prompt(name)
   
   try:
     # 1. Create a thread
@@ -224,7 +165,7 @@ def get_artist_data(name):
     client.beta.threads.messages.create(
       thread_id=thread.id,
       role="user",
-      content=prompt
+      content=name
     )
     
     # 3. Run the assistant on the thread
@@ -243,10 +184,23 @@ def get_artist_data(name):
       time.sleep(1)
       
     # 5. Get the latest message from the thread
+    #messages = client.beta.threads.messages.list(thread_id=thread.id)
+    #response_text = messages.data[0].content[0].text.value
+    # On completion, extract tool output
     messages = client.beta.threads.messages.list(thread_id=thread.id)
-    response_text = messages.data[0].content[0].text.value
+    message = messages.data[0]
+    content = message.content[0]
     
-    return json.loads(response_text)
+    if hasattr(content, "tool_calls"):
+      # Assistant used tool function with structured schema
+      tool_call_result = content.tool_calls[0].function.arguments
+      structured_data = json.loads(tool_call_result)
+    else:
+      # Assistant responded with plain JSON text (not using schema)
+      response_text = content.text.value
+      structured_data = json.loads(response_text)
+      
+    return structured_data
   
   except Exception as e:
     print(f"Error for {name}: {e}")
