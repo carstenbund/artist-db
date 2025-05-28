@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}{{ style.name }}{% endblock %}
+{% block content %}
+<p>{{ style.description }}</p>
+{% if children %}
+<h2>Substyles</h2>
+<ul>
+  {% for child in children %}
+  <li><a href="{{ url_for('style_detail', style_id=child.id) }}">{{ child.name }}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}
+<h2>Artists</h2>
+<ul>
+  {% for artist in artists %}
+  <li><a href="{{ url_for('artist_detail', artist_id=artist.id) }}">{{ artist.canonical_name }}</a></li>
+  {% endfor %}
+</ul>
+{% if page > 1 %}<a href="{{ url_for('style_detail', style_id=style.id, page=page-1) }}">Previous</a>{% endif %}
+{% if page * per_page < total %}<a href="{{ url_for('style_detail', style_id=style.id, page=page+1) }}">Next</a>{% endif %}
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Styles{% endblock %}
+{% block content %}
+<ul>
+  {% for style in styles %}
+  <li><a href="{{ url_for('style_detail', style_id=style.id) }}">{{ style.name }}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}
