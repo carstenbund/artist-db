@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS style_periods (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE NOT NULL,
     type TEXT, -- e.g., 'movement', 'period', 'direction'
-    description TEXT
+    description TEXT,
+    parent_id INTEGER,
+    FOREIGN KEY (parent_id) REFERENCES style_periods(id)
 );
 
 -- Artist-Style Relationship Table

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}{{ artist.canonical_name }}{% endblock %}
+{% block content %}
+<h2>Styles</h2>
+<ul>
+  {% for st in artist.styles %}
+  <li><a href="{{ url_for('style_detail', style_id=st.id) }}">{{ st.name }}</a></li>
+  {% endfor %}
+</ul>
+{% if influences %}
+<h2>Influenced By</h2>
+<ul>
+  {% for i in influences %}
+  <li><a href="{{ url_for('artist_detail', artist_id=i.id) }}">{{ i.canonical_name }}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% if followers %}
+<h2>Influenced</h2>
+<ul>
+  {% for f in followers %}
+  <li><a href="{{ url_for('artist_detail', artist_id=f.id) }}">{{ f.canonical_name }}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}
