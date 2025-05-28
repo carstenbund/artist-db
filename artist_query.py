@@ -85,6 +85,19 @@ def get_artist_id_by_name(name):
   row = cur.fetchone()
   return row[0] if row else None
 
+def artist_has_evaluation(name):
+  """Return True if the artist has stored attributes, indicating a full record."""
+  cur.execute("SELECT id FROM artists WHERE canonical_name = ?", (name,))
+  row = cur.fetchone()
+  if not row:
+    return False
+  artist_id = row[0]
+  cur.execute(
+    "SELECT 1 FROM artist_attributes WHERE artist_id = ? LIMIT 1",
+    (artist_id,)
+  )
+  return cur.fetchone() is not None
+
 def insert_artist_influence(artist_id, influencer_name, influence_type):
   influenced_by_id = get_artist_id_by_name(influencer_name)
   if not influenced_by_id:
@@ -209,9 +222,9 @@ def get_artist_data(name):
 # Main loop
 for name in ARTIST_NAMES:
     print(f"Processing {name}...")
-    
-    # Check if artist already exists
-    if get_artist_id_by_name(name):
+
+    # Check if artist already has a full record
+    if artist_has_evaluation(name):
         print(f"Skipping {name}, already in database.")
         continue
     
